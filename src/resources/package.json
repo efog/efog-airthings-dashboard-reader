@@ -10,7 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.799.0",
+    "btoa": "^1.2.1",
     "debug": "^4.3.1",
+    "luxon": "^1.25.0",
     "moment": "^2.29.1"
   }
 }

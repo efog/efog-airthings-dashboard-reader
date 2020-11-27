@@ -1,5 +1,6 @@
+/* eslint-disable no-new */
 const cdk = require("@aws-cdk/core");
-const airthingsApiPoller = require("../lib/airthingsapi-poller");
+const airthingsApiPoller = require("./airthingsapi-poller");
 
 class CdkStack extends cdk.Stack {
 
@@ -15,7 +16,6 @@ class CdkStack extends cdk.Stack {
         super(scope, id, props);
 
         // The code that defines your stack goes here
-        // eslint-disable-next-line no-new
         new airthingsApiPoller.AirthingsPoller(this, "AirthingsApiPoller");
     }
 }
