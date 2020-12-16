@@ -8,3 +8,5 @@ cdk.out
 .parcel-cache
 
 synth.yaml
+nodejs.zip
+.DS_Store
