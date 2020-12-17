@@ -6,7 +6,9 @@ const kinesis = require("@aws-cdk/aws-kinesis");
 const lambda = require("@aws-cdk/aws-lambda");
 const eventsTarget = require("@aws-cdk/aws-events-targets");
 const { DevicesTable } = require("./storage/devices-table");
+const { DevicesDataUpsertLambda } = require("./functions/devices-data-upsert-lambda");
 const { Duration } = require("@aws-cdk/core");
+const { OpenWeatherMapPollerLambda } = require("./functions/openweathermap-poller-lambda");
 
 class AirthingsPoller extends core.Construct {
     constructor(scope, id, environment = "dev") {
@@ -18,8 +20,18 @@ class AirthingsPoller extends core.Construct {
             "description": "base lamda layer",
             "layerVersionName": `base-functions-layer-${environment}`
         });
+        const devicedataUpsertFunction = new DevicesDataUpsertLambda(this, "DevicesDataUpsert", {
+            "environment": environment,
+            "layerVersion": lambdaLayer,
+            "devicedataTable": devicesTable._devicesTable
+        });
+        const openweathermapPollerFunction = new OpenWeatherMapPollerLambda(this, "OpenWeatherMapPoller", {
+            "environment": environment,
+            "layerVersion": lambdaLayer,
+            "devicedataTable": devicesTable._devicesTable
+        });
         const airthingApiPollerHandler = new lambda.Function(this, "airthingApiPollerLambda", {
-            "runtime": lambda.Runtime.NODEJS_12_X, 
+            "runtime": lambda.Runtime.NODEJS_12_X,
             "code": lambda.Code.fromAsset("nodejs", {
                 "exclude": ["node_modules"]
             }),
@@ -42,13 +54,13 @@ class AirthingsPoller extends core.Construct {
         });
         target.bind(rule, `airthingsapipoller-func-scheduled-trigger-rule-binding-${environment}`);
         const sensorsDataTable = new dynamodb.Table(this, "SensorsDataTable", {
-            "partitionKey": { 
+            "partitionKey": {
                 "name": "deviceid",
-                "type": dynamodb.AttributeType.STRING 
+                "type": dynamodb.AttributeType.STRING
             },
-            "sortKey": { 
+            "sortKey": {
                 "name": "sensortypetimestamp",
-                "type": dynamodb.AttributeType.STRING 
+                "type": dynamodb.AttributeType.STRING
             },
             "billingMode": dynamodb.BillingMode.PAY_PER_REQUEST,
             "encryption": dynamodb.TableEncryption.AWS_MANAGED,
@@ -57,7 +69,7 @@ class AirthingsPoller extends core.Construct {
         sensorsDataTable.env = environment;
         this._sensorsDataTable = sensorsDataTable;
         const loginDataTable = new dynamodb.Table(this, "LoginDataTable", {
-            "partitionKey": { 
+            "partitionKey": {
                 "name": "login_type",
                 "type": dynamodb.AttributeType.STRING,
             },
@@ -75,8 +87,8 @@ class AirthingsPoller extends core.Construct {
         this._dataStream = dataStream;
 
         const sensorDataWriteHandler = new lambda.Function(this, "sensorDataWriterLambda", {
-            "runtime": lambda.Runtime.NODEJS_12_X, 
-            "code": lambda.Code.fromAsset("nodejs", { 
+            "runtime": lambda.Runtime.NODEJS_12_X,
+            "code": lambda.Code.fromAsset("nodejs", {
                 "exclude": ["node_modules"]
             }),
             "handler": "sensorsdata-writer-func.main",
@@ -116,5 +128,5 @@ class AirthingsPoller extends core.Construct {
         this._kinesisEventSource = kinesisEventSource;
     }
 }
-  
+
 module.exports = { AirthingsPoller };

@@ -11,7 +11,7 @@ class DevicesTable extends core.Construct {
             },
             "billingMode": dynamodb.BillingMode.PAY_PER_REQUEST,
             "encryption": dynamodb.TableEncryption.AWS_MANAGED,
-            "tableName": `airthingsapipoller-devicesdata-${environment}`
+            "tableName": `devices-data-${environment}`
         });
         devicesTable.env = environment;
         this._devicesTable = devicesTable;
