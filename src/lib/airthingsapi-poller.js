@@ -9,11 +9,18 @@ const { DevicesTable } = require("./storage/devices-table");
 const { DevicesDataUpsertLambda } = require("./functions/devices-data-upsert-lambda");
 const { Duration } = require("@aws-cdk/core");
 const { OpenWeatherMapPollerLambda } = require("./functions/openweathermap-poller-lambda");
+const { SensorsDataConsolidatedStorage } = require("./storage/sensorsdata-consolidated-bucket");
+const { SensorsDataConsolidatedStream } = require("./streams/sensorsdata-consolidated-stream");
 
 class AirthingsPoller extends core.Construct {
     constructor(scope, id, environment = "dev") {
         super(scope, id);
         const devicesTable = new DevicesTable(this, `${id}.Storage`, environment);
+        const sensorsDataConsoBucket = new SensorsDataConsolidatedStorage(this, `${id}-sensorsdata.Bucket`);
+        const sensorsDataConsolidatedStream = new SensorsDataConsolidatedStream(this, `${id}-sensorsdata.firehosestream`, {
+            "environment": environment,
+            "targetBucket": sensorsDataConsoBucket.bucket
+        });
         const lambdaLayer = new lambda.LayerVersion(this, "base-functions-layer", {
             "compatibleRuntimes": [lambda.Runtime.NODEJS_12_X],
             "code": new lambda.AssetCode(`${__dirname}/../nodejs.zip`),
